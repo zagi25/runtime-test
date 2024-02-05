@@ -28,35 +28,9 @@ async function main (params) {
     // 'info' is the default level if not set
     logger.info('Calling the main action');
 
-    const imsUserToken = getBearerToken(params);
-
-    const CACHE_MAX_AGE_MS = 5 * 60 * 1000 // 5 minutes
-    const VALID_CACHE_ENTRIES = 10000
-    const INVALID_CACHE_ENTRIES = 20000
-    const cache = new ValidationCache(CACHE_MAX_AGE_MS, VALID_CACHE_ENTRIES, INVALID_CACHE_ENTRIES)
-    const ims = new Ims('prod')
-
-    const imsValidation = await ims.validateToken(imsUserToken)
-    logger.info(imsValidation);
-    if (!imsValidation.valid) {
-      const response = {
-        statusCode: 401,
-      }
-      return response;
-    }
-    const partnerData = await (await fetch('https://partnerservices-stage-va6.stage.cloud.adobe.io/apis/partner?email=yugo-stage-spp-gold@yopmail.com&programType=SPP', 
-      {
-        headers: {
-          'x-user-token': imsUserToken,
-          'Accept': 'application/json',
-          'Authorization': 'Bearer ' + imsUserToken,
-        }
-      },)).json();
-    logger.info('requested data from partner service');
-    logger.info(partnerData);
     return {
       statusCode: 200,
-      body: partnerData
+      body: 'Asa'
     };
 
   } catch (error) {
