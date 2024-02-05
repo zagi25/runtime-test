@@ -1,0 +1,32 @@
+application:
+  actions: actions
+  web: web-src
+  runtimeManifest:
+    packages:
+      RatkoDev:
+        license: Apache-2.0
+        actions:
+          first-action:
+            function: actions/first-action/index.js
+            web: 'yes'
+            runtime: nodejs:18
+            inputs:
+              LOG_LEVEL: debug
+            annotations:
+              require-adobe-auth: true
+          protected:
+            function: actions/protected/index.js
+            web: 'yes'
+            runtime: nodejs:18
+            inputs:
+              LOG_LEVEL: debug
+            annotations:
+              require-gw-validation: true
+          second-action:
+            function: actions/second-action/index.js
+            web: 'yes'
+            runtime: nodejs:18
+            inputs:
+              LOG_LEVEL: debug
+            annotations:
+              final: true
