@@ -30,7 +30,7 @@ async function main (params) {
 
     return {
       statusCode: 200,
-      body: 'Asa'
+      body: 'Deployed'
     };
 
   } catch (error) {
