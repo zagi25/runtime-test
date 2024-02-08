@@ -45,3 +45,6 @@ jobs:
           noPublish: true
       - name: Deploy REST API
         run : aio rt api create -c dev-api-swagger.json
+        env:
+          AIO_RUNTIME_NAMESPACE: ${{ secrets.AIO_RUNTIME_NAMESPACE_STAGE }}
+          AIO_RUNTIME_AUTH: ${{ secrets.AIO_RUNTIME_AUTH_STAGE }}
