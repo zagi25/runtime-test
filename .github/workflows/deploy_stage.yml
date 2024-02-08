@@ -43,3 +43,5 @@ jobs:
           os: ${{ matrix.os }}
           command: deploy
           noPublish: true
+      - name: Deploy REST API
+        run : aio rt api create -c dev-api-swagger.json
