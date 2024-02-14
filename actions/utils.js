@@ -103,6 +103,21 @@ function getBearerToken (params) {
   }
   return undefined
 }
+
+function getCookies (params) {
+  const cookies = {};
+  if (params.__ow_headers &&
+      params.__ow_headers.cookie) {
+
+    params.__ow_headers.cookie.split(',').forEach((cookie) => {
+      const [name, value] = cookie.split('=');
+      cookies[name] = value;
+    })
+  }
+
+  return cookies;
+}
+
 /**
  *
  * Returns an error response object and attempts to log.info the status code and error message
@@ -147,5 +162,6 @@ module.exports = {
   getBearerToken,
   stringParameters,
   checkMissingRequestInputs,
-  JSONToBase64
+  JSONToBase64,
+  getCookies
 }

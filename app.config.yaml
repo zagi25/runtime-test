@@ -30,3 +30,19 @@ application:
               LOG_LEVEL: debug
             annotations:
               final: true
+          edge-worker:
+            function: actions/edge-worker/index.js
+            web: 'yes'
+            runtime: nodejs:18
+            inputs:
+              LOG_LEVEL: debug
+            annotations:
+              final: true
+          get-partner-data:
+            function: actions/get-partner-data/index.js
+            web: 'yes'
+            runtime: nodejs:18
+            inputs:
+              LOG_LEVEL: debug
+            annotations:
+              final: true

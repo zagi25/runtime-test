@@ -16,25 +16,57 @@
 
 const fetch = require('node-fetch')
 const { Core } = require('@adobe/aio-sdk')
-const { errorResponse, getBearerToken, stringParameters, checkMissingRequestInputs } = require('../utils')
-const { Ims, ValidationCache, getToken } = require('@adobe/aio-lib-ims')
+const { errorResponse, getCookies } = require('../utils')
+const { Ims } = require('@adobe/aio-lib-ims')
 
 // main function that will be executed by Adobe I/O Runtime
 async function main (params) {
   // create a Logger
   const logger = Core.Logger('main', { level: params.LOG_LEVEL || 'info' })
 
+  const CLIENT_ID_STAGE='APP_GRAVITY_RUNTIME';
+  const CLIENT_ID_PROD='APP_GRAVITY_RUNTIME_TEST_PROD';
+  const SCOPES='openid,AdobeID';
+  const LOGIN_URL = `https://ims-na1.adobelogin.com/ims/authorize/v2?redirect_uri=https://14257-ratkotest-dev.adobeioruntime.net/api/v1/web/RatkoDev/edge-worker&client_id=${CLIENT_ID_PROD}&scope=${SCOPES}`;
+
   try {
     // 'info' is the default level if not set
     logger.info('Calling the main action');
-    logger.info('ENV', process.env['__OW_NAMESPACE']);
+    const cookies = getCookies(params);
+    let partnerToken = cookies['partnerToken']
+
+    if (!partnerToken && !params.code) {
+      return {
+        statusCode: 301,
+        body: '',
+        headers: {
+          Location: LOGIN_URL,
+        }
+      }
+    }
+
+    if (params.code && !partnerToken) {
+      const { partnerData } = await (await fetch(`https://14257-ratkotest-dev.adobeioruntime.net/api/v1/web/RatkoDev/get-partner-data?code=${params.code}`)).json();
+      partnerToken = partnerData;
+
+      if (!partnerToken) {
+        return {
+          statusCode: 401,
+          body: '<h1>No</h1>'
+        }
+      }
+    }
+    const page = await (await fetch('https://main--milo--adobecom.hlx.page/drafts/ratko/icon-block')).text();
+
+    const headers = {};
+    if (partnerToken) {
+      headers['Set-Cookie'] = `partnerToken=${partnerToken}`;
+    }
 
     return {
       statusCode: 200,
-      body: 'Deployed',
-      headers: {
-        Asa: 'asa'
-      }
+      body: page,
+      headers
     }
 
   } catch (error) {

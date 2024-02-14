@@ -15,11 +15,15 @@ async function main ( params ) {
     // log parameters, only if params.LOG_LEVEL === 'debug'
     logger.debug(stringParameters(params))
 
+    // if (!params.email || !params.authId) {
+    //   return errorResponse(400, 'Bad request', logger);
+    // }
+
     const imsUserToken = getBearerToken(params);
     const { client_id } = getTokenData(imsUserToken);
     const ims = new Ims('prod');
     const { email, authId } = await ims.get('/ims/profile', imsUserToken, {client_id});
-    const { spp_partner_level } = await (await fetch(`https://partnerservices-va6.cloud.adobe.io/apis/partner?email=${email}&programType=SPP`, 
+    const { spp_partner_level } = await (await fetch(`https://partnerservices-stage-va6.stage.cloud.adobe.io/apis/partner?email=${email}&programType=SPP`, 
       {
         headers: {
           'x-user-token': imsUserToken,
@@ -30,9 +34,8 @@ async function main ( params ) {
     const result = JSONToBase64({authId, spp_partner_level});
 
     return {
-      statusCode: 200,
-      body: result,
-    };
+      partnerData : result,
+    }
   } catch (error) {
     // log any server errors
     logger.error(error)
@@ -45,3 +48,5 @@ async function main ( params ) {
 }
 
 exports.main = main
+
+
