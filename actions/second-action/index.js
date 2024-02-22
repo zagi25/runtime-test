@@ -26,8 +26,8 @@ async function main (params) {
 
   try {
     // 'info' is the default level if not set
+    logger.info('ENV', process.env.AIO_CLI_ENV);
     logger.info('Calling the main action');
-    logger.info('ENV', process.env['__OW_NAMESPACE']);
 
     return {
       statusCode: 200,

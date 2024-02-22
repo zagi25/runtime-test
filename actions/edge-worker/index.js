@@ -26,47 +26,88 @@ async function main (params) {
 
   const CLIENT_ID_STAGE='APP_GRAVITY_RUNTIME';
   const CLIENT_ID_PROD='APP_GRAVITY_RUNTIME_TEST_PROD';
-  const SCOPES='openid,AdobeID';
-  const LOGIN_URL = `https://ims-na1.adobelogin.com/ims/authorize/v2?redirect_uri=https://14257-ratkotest-dev.adobeioruntime.net/api/v1/web/RatkoDev/edge-worker&client_id=${CLIENT_ID_PROD}&scope=${SCOPES}`;
+  const SCOPES='openid,AdobeID,session';
+  const LOGIN_URL = `https://ims-na1.adobelogin.com/ims/authorize/v2?redirect_uri=https://14257-ratkotest-dev.adobeioruntime.net/api/v1/web/RatkoDev/edge-worker?page=login&client_id=${CLIENT_ID_PROD}&scope=${SCOPES}&response_type=code`;
 
   try {
-    // 'info' is the default level if not set
     logger.info('Calling the main action');
-    const cookies = getCookies(params);
-    let partnerToken = cookies['partnerToken']
+    const pageUrl = params.page;
+    let page = '';
+    let partnerToken = '';
+    let pageLevel = '';
 
-    if (!partnerToken && !params.code) {
+    // Dummy page URL that user redirects to after login
+    // Here we will use Authorization Code to get access_token and to call partner service to obtain partner level
+    if (pageUrl === 'login' && params.code) {
+      const authCode = params.code;
+      const partnerDataResponse = await fetch(`https://14257-ratkotest-dev.adobeioruntime.net/api/v1/web/RatkoDev/get-partner-data`, {
+        headers: {
+          'X-OW-EXTRA-LOGGING': 'on',
+          Authorization: `Bearer ${authCode}`
+        }
+      });
+
+      if (!partnerDataResponse.ok) {
+        return {
+          statusCode: 401,
+          body: '<h1>Not partner</h1>'
+        }
+      }
+
+      // If all operations are successfull we redirect the user to the desired page and set partner_token for further use
+      const { partnerData } = await partnerDataResponse.json();
       return {
         statusCode: 301,
         body: '',
         headers: {
-          Location: LOGIN_URL,
+          'Set-Cookie': `partner_token=${partnerData}; Path=/; HttpOnly; Secure; SameSite=None; Domain=.14257-ratkotest-dev.adobeioruntime.net; Max-Age=31556952`,
+          Location:`https://14257-ratkotest-dev.adobeioruntime.net/api/v1/web/RatkoDev/edge-worker?page=${params.state}`
         }
       }
     }
 
-    if (params.code && !partnerToken) {
-      const { partnerData } = await (await fetch(`https://14257-ratkotest-dev.adobeioruntime.net/api/v1/web/RatkoDev/get-partner-data?code=${params.code}`)).json();
-      partnerToken = partnerData;
+    page = await fetch(pageUrl);
+    pageLevel = page.headers.get('partner-level') ?? '';
+    const pageResponse = await page.text();
 
-      if (!partnerToken) {
-        return {
-          statusCode: 401,
-          body: '<h1>No</h1>'
+    // If page is public we just return the page
+    if (!pageLevel || pageLevel === 'public') {
+      return {
+        statusCode: 200,
+        body: pageResponse,
+      }
+    }
+
+    const cookies = getCookies(params);
+    partnerToken = cookies['partner_token'] ?? '';
+
+    // If page is not public and there is no partner_token cookie we redirect user to IMS login page
+    if (!partnerToken) {
+      return {
+        statusCode: 301,
+        body: '',
+        headers: {
+          Location: LOGIN_URL + `&state=${pageUrl}`,
         }
       }
     }
-    const page = await (await fetch('https://main--milo--adobecom.hlx.page/drafts/ratko/icon-block')).text();
 
-    const headers = {};
-    if (partnerToken) {
-      headers['Set-Cookie'] = `partnerToken=${partnerToken}`;
+    // Decrypting parnter data and comparing page level and partner level
+    const partnerDataResponse = await fetch(`https://14257-ratkotest-dev.adobeioruntime.net/api/v1/web/RatkoDev/get-partner-data?partner_token=${partnerToken}&page_level=${pageLevel}`, {
+      headers: {
+        'X-OW-EXTRA-LOGGING': 'on',
+      }
+    });
+    if (!partnerDataResponse.ok) {
+      return {
+        statusCode: 401,
+        body: '<h1>No</h1>'
+      }
     }
 
     return {
       statusCode: 200,
-      body: page,
-      headers
+      body: pageResponse,
     }
 
   } catch (error) {

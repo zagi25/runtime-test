@@ -109,8 +109,8 @@ function getCookies (params) {
   if (params.__ow_headers &&
       params.__ow_headers.cookie) {
 
-    params.__ow_headers.cookie.split(',').forEach((cookie) => {
-      const [name, value] = cookie.split('=');
+    params.__ow_headers.cookie.split(';').forEach((cookie) => {
+      const [name, value] = cookie.trim().split('=');
       cookies[name] = value;
     })
   }
@@ -157,11 +157,24 @@ function JSONToBase64( data ) {
   return Buffer.concat([encrypted, cipher.final()]).toString('base64');
 }
 
+function Base64ToJSON( data ) {
+  const ENCRYPTION_METHOD='aes-256-cbc';
+  const ENCRYPTION_KEY='e96e342bb53dc1133e87dff56a9049ed';
+  const ENCRYPTION_IV='e5d7614486b44f40';
+
+  const decipher = crypto.createDecipheriv(ENCRYPTION_METHOD, Buffer.from(ENCRYPTION_KEY), Buffer.from(ENCRYPTION_IV));
+  let decrypted = decipher.update(Buffer.from(data, 'base64'));
+  decrypted = Buffer.concat([decrypted, decipher.final()]);
+
+  return JSON.parse(decrypted.toString());
+}
+
 module.exports = {
   errorResponse,
   getBearerToken,
   stringParameters,
   checkMissingRequestInputs,
   JSONToBase64,
+  Base64ToJSON,
   getCookies
 }
