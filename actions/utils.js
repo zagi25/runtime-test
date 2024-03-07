@@ -5,6 +5,7 @@
 /* This file exposes some common utilities for your actions */
 
 const crypto = require('crypto');
+const { getCliEnv } = require('@adobe/aio-lib-env')
 
 /**
  *
@@ -153,8 +154,7 @@ function JSONToBase64( data ) {
 
   const cipher = crypto.createCipheriv(ENCRYPTION_METHOD, Buffer.from(ENCRYPTION_KEY), Buffer.from(ENCRYPTION_IV));
   const encrypted = cipher.update(Buffer.from(JSON.stringify(data)));
-  
-  return Buffer.concat([encrypted, cipher.final()]).toString('base64');
+  return result = Buffer.concat([encrypted, cipher.final()]).toString('base64')
 }
 
 function Base64ToJSON( data ) {
@@ -169,6 +169,26 @@ function Base64ToJSON( data ) {
   return JSON.parse(decrypted.toString());
 }
 
+function getClientId() {
+  const env = getCliEnv();
+  const CLIENT_ID = {
+    'stage': 'APP_GRAVITY_RUNTIME',
+    'prod': 'APP_GRAVITY_RUNTIME_TEST_PROD'
+  };
+
+  return CLIENT_ID[env];
+}
+
+function getRequestBody( params ) {
+  if (!params?.__ow_body) return {};
+  try {
+    const body = JSON.parse(params.__ow_body);
+    return body;
+  } catch (e) {
+    return params.__ow_body;
+  }
+}
+
 module.exports = {
   errorResponse,
   getBearerToken,
@@ -176,5 +196,7 @@ module.exports = {
   checkMissingRequestInputs,
   JSONToBase64,
   Base64ToJSON,
-  getCookies
+  getCookies,
+  getClientId,
+  getRequestBody,
 }
