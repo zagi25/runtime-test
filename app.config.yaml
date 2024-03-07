@@ -46,3 +46,27 @@ application:
               LOG_LEVEL: debug
             annotations:
               final: true
+          logout:
+            function: actions/logout/index.js
+            web: 'yes'
+            runtime: nodejs:18
+            inputs:
+              LOG_LEVEL: debug
+            annotations:
+              final: true
+          login:
+            function: actions/login/index.js
+            web: 'yes'
+            runtime: nodejs:18
+            inputs:
+              LOG_LEVEL: debug
+            annotations:
+              final: true
+          auth-user:
+            function: actions/auth-user/index.js
+            web: 'yes'
+            runtime: nodejs:18
+            inputs:
+              LOG_LEVEL: debug
+            annotations:
+              final: true
