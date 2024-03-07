@@ -24,10 +24,10 @@ const { getCliEnv } = require('@adobe/aio-lib-env')
 async function main (params) {
   // create a Logger
   const logger = Core.Logger('main', { level: params.LOG_LEVEL || 'info' })
+  logger.info('Successful deploy'); 
 
   const env = getCliEnv();
-  const CLIENT_ID_STAGE='APP_GRAVITY_RUNTIME';
-  const CLIENT_ID= env === 'stage' ? 'APP_GRAVITY_RUNTIME' : 'APP_GRAVITY_RUNTIME_TEST_PROD';
+  const CLIENT_ID = env === 'stage' ? 'APP_GRAVITY_RUNTIME' : 'APP_GRAVITY_RUNTIME_TEST_PROD';
   const SCOPES='openid,AdobeID';
 
   try {
