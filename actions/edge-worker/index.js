@@ -24,6 +24,7 @@ const { getCliEnv } = require('@adobe/aio-lib-env')
 async function main (params) {
   // create a Logger
   const logger = Core.Logger('main', { level: params.LOG_LEVEL || 'info' })
+
   logger.info('Successful deploy'); 
 
   const env = getCliEnv();

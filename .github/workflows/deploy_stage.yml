@@ -38,5 +38,9 @@ jobs:
         env:
           AIO_RUNTIME_NAMESPACE: ${{ secrets.AIO_RUNTIME_NAMESPACE_STAGE }}
           AIO_RUNTIME_AUTH: ${{ secrets.AIO_RUNTIME_AUTH_STAGE }}
-          AIO_CLI_ENV: prod
-
+          AIO_CLI_ENV: stage
+        uses: adobe/aio-apps-action@2.0.2
+        with:
+          os: ${{ matrix.os }}
+          command: deploy
+          noPublish: true
