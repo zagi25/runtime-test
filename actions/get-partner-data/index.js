@@ -1,8 +1,9 @@
 const fetch = require('node-fetch');
 const { Core } = require('@adobe/aio-sdk');
-const { errorResponse, getRequestBody, JSONToBase64, Base64ToJSON, getClientId } = require('../utils');
+const { errorResponse, getRequestBody, JSONToBase64, Base64ToJSON, getClientId, returnError } = require('../utils');
 const { Ims } = require('@adobe/aio-lib-ims');
 const { getCliEnv } = require('@adobe/aio-lib-env')
+const { PartnerService } = require('../../services/partner');
 
 // main function that will be executed by Adobe I/O Runtime
 async function main ( params ) {
@@ -11,7 +12,7 @@ async function main ( params ) {
   const logger = Core.Logger('main', { level: params.LOG_LEVEL || 'info' })
   const CLIENT_ID = getClientId();
   const SCOPES='openid,AdobeID';
-  const CLIENT_SECRET= env === 'stage' ? 's8e-fdsKA6dZCvVeOPVGcsxvdGYkfuCnzZkj' : 'p8e-sHImkEfXhVWKBTIEQp3HMmIQNv8Xe80b';
+  const CLIENT_SECRET = env === 'stage' ? 's8e-fdsKA6dZCvVeOPVGcsxvdGYkfuCnzZkj' : 'p8e-sHImkEfXhVWKBTIEQp3HMmIQNv8Xe80b';
 
   try {
     // log parameters, only if params.LOG_LEVEL === 'debug'
@@ -29,7 +30,7 @@ async function main ( params ) {
     // Retrive partner data form partner service
     if (!partnerData && auxSid) {
       // Set env
-      const ims = new Ims(env)
+      const ims = new Ims()
       const { access_token: accessToken }  = await ims.post('/ims/token/v1', undefined, {
         grant_type: 'aux_sid_exchange',
         client_id: CLIENT_ID,
@@ -39,20 +40,8 @@ async function main ( params ) {
       });
       const { email, authId } = await ims.get(`/ims/profile/v1?client_id=${CLIENT_ID}`, accessToken);
       // Turn into seperate class similar to Ims
-      const partnerServiceResponse = await fetch(`https://partnerservices${env === 'stage' ? '-stage' :''}-va6.${env === 'stage' ? 'stage.' : ''}cloud.adobe.io/apis/partner?email=${email}&programType=SPP`, 
-        {
-          headers: {
-            'x-user-token': accessToken,
-            'Accept': 'application/json',
-            'Authorization': 'Bearer ' + accessToken,
-          }
-        });
-
-      if (!partnerServiceResponse.ok) {
-        return errorResponse(404, 'Not a partner', logger);
-      }
-
-      const { spp_partner_level } = await partnerServiceResponse.json();
+      const partnerService = new PartnerService('SPP');
+      const { spp_partner_level } = await partnerService.getPartnerData(email, accessToken);
       // Encrypt data
       partnerData = JSONToBase64({authId, spp_partner_level});
       partnerLevel = spp_partner_level;
@@ -66,7 +55,7 @@ async function main ( params ) {
     }
 
     if (!pageLevel.includes(partnerLevel.toLowerCase()) || !partnerLevel) {
-      return errorResponse(401, 'Low level', logger);
+      return errorResponse(403, 'Low level', logger);
     }
 
     return {
@@ -76,13 +65,7 @@ async function main ( params ) {
       }
     }
   } catch (error) {
-    // log any server errors
-    logger.info(error);
-    if (error.message.includes('401')) {
-      return errorResponse(401, 'Unauthorized', logger);
-    }
-
-    return errorResponse(500, 'server error', logger);
+    return returnError(error, logger);
   }
 }
 

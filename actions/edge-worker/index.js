@@ -17,13 +17,13 @@
 const fetch = require('node-fetch')
 const { Core } = require('@adobe/aio-sdk')
 const { errorResponse, getCookies } = require('../utils')
-const { Ims } = require('@adobe/aio-lib-ims')
 const { getCliEnv } = require('@adobe/aio-lib-env')
 
 // main function that will be executed by Adobe I/O Runtime
 async function main (params) {
   // create a Logger
   const logger = Core.Logger('main', { level: params.LOG_LEVEL || 'info' })
+
   logger.info('Successful deploy'); 
 
   const env = getCliEnv();
@@ -98,7 +98,6 @@ async function main (params) {
     }
   } catch (error) {
     // log any server errors
-    logger.error(error)
     // return with 500
     return errorResponse(500, 'server error', logger)
   }

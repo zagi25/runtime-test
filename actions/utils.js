@@ -147,6 +147,30 @@ function errorResponse (statusCode, message, logger) {
   }
 }
 
+function parseErrorMessage(message) {
+  const regex = /^(2\d{2}|3\d{2}|4\d{2})\s\(.+\)$/;
+  const isRequestMessage = regex.test(message);
+  let errorStatus = 500;
+  let errorMessage = 'Server Error';
+  if (isRequestMessage) {
+    [errorStatus, errorMessage] = message.replace(/[()]/g, '').split(' ');
+  }
+
+  return {
+    requestError: isRequestMessage,
+    errorStatus,
+    errorMessage,
+  }
+}
+
+function returnError( error, logger) {
+  const { requestError, errorStatus, errorMessage } = parseErrorMessage(error.message);
+  if (!requestError) {
+    logger.error(error);
+  }
+  return errorResponse(errorStatus, errorMessage, logger);
+}
+
 function JSONToBase64( data ) {
   const ENCRYPTION_METHOD='aes-256-cbc';
   const ENCRYPTION_KEY='e96e342bb53dc1133e87dff56a9049ed';
@@ -199,4 +223,5 @@ module.exports = {
   getCookies,
   getClientId,
   getRequestBody,
+  returnError
 }
