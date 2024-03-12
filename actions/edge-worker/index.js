@@ -17,7 +17,6 @@
 const fetch = require('node-fetch')
 const { Core } = require('@adobe/aio-sdk')
 const { errorResponse, getCookies } = require('../utils')
-const { Ims } = require('@adobe/aio-lib-ims')
 const { getCliEnv } = require('@adobe/aio-lib-env')
 
 // main function that will be executed by Adobe I/O Runtime
@@ -33,7 +32,7 @@ async function main (params) {
 
   try {
     const pageUrl = params.page;
-    const LOGIN_URL = `https://ims-na1${env === 'stage' ? '-stg1' : ''}.adobelogin.com/ims/authorize/v2?redirect_uri=https://14257-ratkotest-dev.adobeioruntime.net/api/v1/web/RatkoDev/edge-worker?page=https://test-branch3--dx-partners--adobecom.hlx.page/SPP/drafts/ratko/public&client_id=${CLIENT_ID}&scope=${SCOPES}&response_type=token`;
+    const LOGIN_URL = `https://ims-na1${env === 'stage' ? '-stg1' : ''}.adobelogin.com/ims/authorize/v2?redirect_uri=https://14257-ratkotest${env === 'stage' ? '-dev' : ''}.adobeioruntime.net/api/v1/web/RatkoDev/edge-worker?page=https://test-branch3--dx-partners--adobecom.hlx.page/SPP/drafts/ratko/public&client_id=${CLIENT_ID}&scope=${SCOPES}&response_type=token`;
     const page = await fetch(pageUrl);
     const pageLevel = page.headers.get('partner-level') ?? '';
     const pageResponse = await page.text();
@@ -78,7 +77,7 @@ async function main (params) {
     //   ({ accessToken } = await accessTokenResponse.json());
     // }
 
-    const partnerDataResponse = await fetch('https://14257-ratkotest-dev.adobeioruntime.net/api/v1/web/RatkoDev/get-partner-data', {
+    const partnerDataResponse = await fetch(`https://14257-ratkotest${env === 'stage' ? '-dev' : ''}.adobeioruntime.net/api/v1/web/RatkoDev/get-partner-data`, {
       method: "POST",
       body: JSON.stringify({partnerToken, pageLevel, auxSid})
     });
@@ -93,13 +92,12 @@ async function main (params) {
       statusCode: 200,
       body: '',
       headers: {
-        'Set-Cookie': `partner_token=${partnerData}; Path=/; HttpOnly; Secure; SameSite=None; Domain=.14257-ratkotest-dev.adobeioruntime.net; Max-Age=31556952`,
+        'Set-Cookie': `partner_token=${partnerData}; Path=/; HttpOnly; Secure; SameSite=None; Domain=.14257-ratkotest${env === 'stage' ? '-dev' : ''}.adobeioruntime.net; Max-Age=31556952`,
       },
       body: pageResponse,
     }
   } catch (error) {
     // log any server errors
-    logger.error(error)
     // return with 500
     return errorResponse(500, 'server error', logger)
   }
